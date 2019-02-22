@@ -4,7 +4,7 @@ import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
 public abstract class AbstractFisch<THIS extends AbstractFisch<?, ?>, DIR extends RichtungGen> 
-   extends AbstractLebewesen 
+   extends AbstractLebewesen<THIS> 
    implements Movable<THIS> {
 
    private final DIR richtungGen;
@@ -22,4 +22,5 @@ public abstract class AbstractFisch<THIS extends AbstractFisch<?, ?>, DIR extend
    }
 
    protected abstract THIS createWithStartPoint(Point startpoint, DIR richtungGen);
+   
 }

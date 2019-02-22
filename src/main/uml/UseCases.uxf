@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.3.0">
+  <help_text>// Uncomment the following line to change the fontsize and font:
+// fontsize=14
+// fontfamily=SansSerif //possible: SansSerif,Serif,Monospaced
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Welcome to UMLet!
+//
+// Double-click on elements to add them to the diagram, or to copy them
+// Edit elements by modifying the text in this panel
+// Hold Ctrl to select multiple elements
+// Use Ctrl+mouse to select via lasso
+//
+// Use +/- or Ctrl+mouse wheel to zoom
+// Drag a whole relation at its central square icon
+//
+// Press Ctrl+C to copy the whole diagram to the system clipboard (then just paste it to, eg, Word)
+// Edit the files in the "palettes" directory to create your own element palettes
+//
+// Select "Custom Elements &gt; New..." to create new element types
+//////////////////////////////////////////////////////////////////////////////////////////////
+== Analyse ==
+
+Zeiteinheiten
+
+_Fisch_
+	- Gewicht
+	- Verliert 1 Gewichtseinheit pro Zeiteinheit
+	- Stirbt bei Gewicht &lt;=0
+	- Pflanzt sich fort
+		- "Nach best. zeitspanne" --&gt; Zeiteinheit
+		- Original Stirbt
+		- Zwei neue teilen sich Original-Gewicht
+	- Bewegung
+		- Frisst Planktion in neuer "Zelle" ==&gt; Erhöht Gewicht
+		- Belegte Zelle durch Fisch, Hai oder Fels storniert Bewegung
+		- Heraustreten aus Ozean storniert Bewegung
+		- Richtungen: N, NO, O, SO, S, SW, W, NW wird zufällig gewählt.
+		- Bei Vermehrung bekommt einer der Winkel eine höhere Wahrscheinlichkeit.
+	
+_ Hai
+	- Gewicht
+	- Verliert 1 Gewichtseinheit pro Zeiteinheit
+	- Stirbt bei Gewicht &lt;=0
+	- Pflanzt sich fort
+		- "Nach best. zeitspanne" --&gt; Zeiteinheit
+		- Original Stirbt
+		- Zwei neue teilen sich Original-Gewicht
+	- Bewegung
+	   - Ist in Nachbarzelle ein Fisch, schwimmt er hinein und frisst den Fisch
+	   - Gefressener Fisch Gewicht addiert Hai Gewicht.
+	   - Haie werden nicht gefressen
+	   - Kein Fisch -&gt; Wie Fisch bei immer gleicher Wahrscheinlichkeit.
+	
+_Ozean
+	- quadratische Zellen
+	
+_Plankton_
+
+</help_text>
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLActor</id>
+    <coordinates>
+      <x>100</x>
+      <y>90</y>
+      <w>60</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>Fisch</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLActor</id>
+    <coordinates>
+      <x>100</x>
+      <y>370</y>
+      <w>60</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>Hai</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLActor</id>
+    <coordinates>
+      <x>550</x>
+      <y>90</y>
+      <w>80</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>Plankton</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLUseCase</id>
+    <coordinates>
+      <x>70</x>
+      <y>270</y>
+      <w>120</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>Frisst</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>120</x>
+      <y>120</y>
+      <w>200</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;180.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>410</x>
+      <y>120</y>
+      <w>200</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;&gt;</panel_attributes>
+    <additional_attributes>10.0;10.0;180.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLGeneric</id>
+    <coordinates>
+      <x>0</x>
+      <y>20</y>
+      <w>650</w>
+      <h>490</h>
+    </coordinates>
+    <panel_attributes>System
+halign=left</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLUseCase</id>
+    <coordinates>
+      <x>300</x>
+      <y>110</y>
+      <w>120</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>Frisst</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>120</x>
+      <y>300</y>
+      <w>30</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;&gt;</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>120</x>
+      <y>170</y>
+      <w>30</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;&gt;</panel_attributes>
+    <additional_attributes>10.0;100.0;10.0;10.0</additional_attributes>
+  </element>
+</diagram>

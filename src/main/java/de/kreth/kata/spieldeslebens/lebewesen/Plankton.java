@@ -18,4 +18,10 @@ public class Plankton extends AbstractLebewesen {
       return "Plankton [" + super.toString() + "]";
    }
 
+   @Override
+   protected AbstractLebewesen createWithWeight(int weight) {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
 }
