@@ -84,11 +84,14 @@ public class GameFrame extends JFrame implements ItemListener {
 	}
 
 	public void createBoardPanel(Board board) {
-		boardPanel = new JPanel(new GridLayout(board.getMaxY() + Math.abs(board.getMiny()),
-				board.getMaxX() + Math.abs(board.getMinX())));
+		Point upperLeftCorner = board.getUpperLeftCorner();
+		Point lowerRightCorner = board.getLowerRightCorner();
 
-		for (int x = board.getMinX(); x <= board.getMaxX(); x++) {
-			for (int y = board.getMiny(); y <= board.getMaxY(); y++) {
+		boardPanel = new JPanel(new GridLayout(lowerRightCorner.getY() + Math.abs(upperLeftCorner.getY()),
+				lowerRightCorner.getX() + Math.abs(upperLeftCorner.getX())));
+
+		for (int x = upperLeftCorner.getX(); x <= lowerRightCorner.getX(); x++) {
+			for (int y = upperLeftCorner.getY(); y <= lowerRightCorner.getY(); y++) {
 				OceanField field = new OceanField();
 				field.point = new Point(x, y);
 				pointToPanelMap.put(field.point, field);

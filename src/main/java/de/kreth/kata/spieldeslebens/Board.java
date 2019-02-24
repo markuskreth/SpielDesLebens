@@ -32,13 +32,9 @@ public class Board {
 
 	private final Executor eventExecutor = Executors.newSingleThreadExecutor();
 
-	final int minX;
+	final Point upperLeftCorner;
 
-	final int miny;
-
-	final int maxX;
-
-	final int maxY;
+	final Point lowerRightCorner;
 
 	List<Fisch> fische;
 
@@ -49,10 +45,9 @@ public class Board {
 	Map<Point, Integer> plankton;
 
 	public Board() {
-		minX = 0;
-		miny = 0;
-		maxX = 30;
-		maxY = 30;
+		upperLeftCorner = new Point(0, 0);
+		lowerRightCorner = new Point(30, 30);
+
 		fische = new ArrayList<>();
 		haie = new ArrayList<>();
 		felsen = new ArrayList<>();
@@ -88,33 +83,26 @@ public class Board {
 
 	}
 
-	public int getMaxX() {
-		return maxX;
+	public Point getUpperLeftCorner() {
+		return upperLeftCorner;
 	}
 
-	public int getMaxY() {
-		return maxY;
-	}
-
-	public int getMinX() {
-		return minX;
-	}
-
-	public int getMiny() {
-		return miny;
+	public Point getLowerRightCorner() {
+		return lowerRightCorner;
 	}
 
 	public boolean isOccupied(final Point position) {
-		if (position.getX() <= minX || position.getX() >= maxX || position.getY() <= miny || position.getY() >= maxY) {
+		if (position.getX() < upperLeftCorner.getX() || position.getX() > lowerRightCorner.getX()
+				|| position.getY() <= upperLeftCorner.getY() || position.getY() >= lowerRightCorner.getY()) {
 			return true;
 		}
-		for (final Felsen fels : felsen) {
+		for (final WithPosition fels : felsen) {
 			if (fels.currentPosition().equals(position)) {
 				return true;
 			}
 		}
 
-		return false;
+		return getOccupation(position).isPresent();
 	}
 
 	public Optional<WithPosition> getOccupation(final Point position) {
