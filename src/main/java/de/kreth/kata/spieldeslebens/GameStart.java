@@ -5,8 +5,8 @@ import javax.swing.SwingUtilities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.kreth.kata.spieldeslebens.lebewesen.Fisch;
-import de.kreth.kata.spieldeslebens.lebewesen.Hai;
+import de.kreth.kata.spieldeslebens.items.Fisch;
+import de.kreth.kata.spieldeslebens.items.Hai;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 import de.kreth.kata.spieldeslebens.swing.GameFrame;
 

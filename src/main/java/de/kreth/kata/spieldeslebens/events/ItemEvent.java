@@ -1,6 +1,6 @@
 package de.kreth.kata.spieldeslebens.events;
 
-import de.kreth.kata.spieldeslebens.lebewesen.WithPosition;
+import de.kreth.kata.spieldeslebens.items.WithPosition;
 
 public class ItemEvent<T extends WithPosition> {
 	private final T item;

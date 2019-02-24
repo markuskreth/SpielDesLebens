@@ -1,4 +1,4 @@
-package de.kreth.kata.spieldeslebens.lebewesen;
+package de.kreth.kata.spieldeslebens.items;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

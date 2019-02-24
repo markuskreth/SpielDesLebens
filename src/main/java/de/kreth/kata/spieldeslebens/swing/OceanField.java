@@ -50,7 +50,7 @@ class OceanField extends JPanel {
 			g2d.drawString("R", 2, 18);
 			break;
 		case SHARK:
-			g2d.drawString("S", 2, 18);
+			g2d.drawString("Shark", 2, 18);
 			break;
 		default:
 			break;

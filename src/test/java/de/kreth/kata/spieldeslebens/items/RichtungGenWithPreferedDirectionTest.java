@@ -1,4 +1,4 @@
-package de.kreth.kata.spieldeslebens.lebewesen;
+package de.kreth.kata.spieldeslebens.items;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
+import de.kreth.kata.spieldeslebens.items.RichtungGenWithPreferedDirection;
 import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 
 

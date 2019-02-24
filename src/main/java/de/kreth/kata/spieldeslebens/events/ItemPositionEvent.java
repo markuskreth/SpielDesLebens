@@ -3,7 +3,7 @@ package de.kreth.kata.spieldeslebens.events;
 import java.util.Objects;
 import java.util.Optional;
 
-import de.kreth.kata.spieldeslebens.lebewesen.WithPosition;
+import de.kreth.kata.spieldeslebens.items.WithPosition;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
 /**

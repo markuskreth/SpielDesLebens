@@ -16,11 +16,12 @@ import org.apache.logging.log4j.Logger;
 import de.kreth.kata.spieldeslebens.events.ItemEvent;
 import de.kreth.kata.spieldeslebens.events.ItemListener;
 import de.kreth.kata.spieldeslebens.events.ItemPositionEvent;
-import de.kreth.kata.spieldeslebens.lebewesen.AbstractFisch;
-import de.kreth.kata.spieldeslebens.lebewesen.AbstractLebewesen;
-import de.kreth.kata.spieldeslebens.lebewesen.Fisch;
-import de.kreth.kata.spieldeslebens.lebewesen.Hai;
-import de.kreth.kata.spieldeslebens.lebewesen.WithPosition;
+import de.kreth.kata.spieldeslebens.items.AbstractFisch;
+import de.kreth.kata.spieldeslebens.items.AbstractLebewesen;
+import de.kreth.kata.spieldeslebens.items.Felsen;
+import de.kreth.kata.spieldeslebens.items.Fisch;
+import de.kreth.kata.spieldeslebens.items.Hai;
+import de.kreth.kata.spieldeslebens.items.WithPosition;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
 public class Board {
@@ -43,7 +44,7 @@ public class Board {
 
 	List<Hai> haie;
 
-	List<Point> felsen;
+	List<Felsen> felsen;
 
 	Map<Point, Integer> plankton;
 
@@ -81,7 +82,10 @@ public class Board {
 	}
 
 	public void addFelsen(final Point felsen) {
-		this.felsen.add(felsen);
+		Felsen e = new Felsen(felsen);
+		this.felsen.add(e);
+		fireEvent(new ItemPositionEvent<Felsen>(e, Optional.empty()));
+
 	}
 
 	public int getMaxX() {
@@ -104,8 +108,8 @@ public class Board {
 		if (position.getX() <= minX || position.getX() >= maxX || position.getY() <= miny || position.getY() >= maxY) {
 			return true;
 		}
-		for (final Point fels : felsen) {
-			if (fels.equals(position)) {
+		for (final Felsen fels : felsen) {
+			if (fels.currentPosition().equals(position)) {
 				return true;
 			}
 		}

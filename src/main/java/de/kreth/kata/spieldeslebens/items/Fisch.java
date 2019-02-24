@@ -1,4 +1,4 @@
-package de.kreth.kata.spieldeslebens.lebewesen;
+package de.kreth.kata.spieldeslebens.items;
 
 import de.kreth.kata.spieldeslebens.ozean.Point;
 

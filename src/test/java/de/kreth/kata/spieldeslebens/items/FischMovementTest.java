@@ -1,10 +1,11 @@
-package de.kreth.kata.spieldeslebens.lebewesen;
+package de.kreth.kata.spieldeslebens.items;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.kreth.kata.spieldeslebens.items.Fisch;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
 class FischMovementTest {

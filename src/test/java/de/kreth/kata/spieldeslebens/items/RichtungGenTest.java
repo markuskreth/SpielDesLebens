@@ -1,4 +1,4 @@
-package de.kreth.kata.spieldeslebens.lebewesen;
+package de.kreth.kata.spieldeslebens.items;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
+import de.kreth.kata.spieldeslebens.items.RichtungGen;
 import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 
 

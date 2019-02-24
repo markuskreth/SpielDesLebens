@@ -1,4 +1,4 @@
-package de.kreth.kata.spieldeslebens.lebewesen;
+package de.kreth.kata.spieldeslebens.items;
 
 import java.util.Random;
 import java.util.function.IntSupplier;

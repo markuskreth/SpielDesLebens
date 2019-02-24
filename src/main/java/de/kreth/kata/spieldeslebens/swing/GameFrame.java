@@ -22,7 +22,9 @@ import de.kreth.kata.spieldeslebens.Board;
 import de.kreth.kata.spieldeslebens.events.ItemEvent;
 import de.kreth.kata.spieldeslebens.events.ItemListener;
 import de.kreth.kata.spieldeslebens.events.ItemPositionEvent;
-import de.kreth.kata.spieldeslebens.lebewesen.WithPosition;
+import de.kreth.kata.spieldeslebens.items.Fisch;
+import de.kreth.kata.spieldeslebens.items.Hai;
+import de.kreth.kata.spieldeslebens.items.WithPosition;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
 public class GameFrame extends JFrame implements ItemListener {
@@ -89,9 +91,6 @@ public class GameFrame extends JFrame implements ItemListener {
 			for (int y = board.getMiny(); y <= board.getMaxY(); y++) {
 				OceanField field = new OceanField();
 				field.point = new Point(x, y);
-				if (y % 2 == 0) {
-					field.setShark();
-				}
 				pointToPanelMap.put(field.point, field);
 				boardPanel.add(field);
 			}
@@ -104,7 +103,12 @@ public class GameFrame extends JFrame implements ItemListener {
 			ItemPositionEvent<?> positionEvent = (ItemPositionEvent<?>) ev;
 			positionEvent.getOldPosition().ifPresent(p -> resetField(p));
 			WithPosition item = positionEvent.getItem();
-			pointToPanelMap.get(item.currentPosition()).setFish();
+			if (item instanceof Fisch) {
+				pointToPanelMap.get(item.currentPosition()).setFish();
+			}
+			else if (item instanceof Hai) {
+				pointToPanelMap.get(item.currentPosition()).setShark();
+			}
 		}
 	}
 
