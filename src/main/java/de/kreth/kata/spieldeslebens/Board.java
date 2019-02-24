@@ -48,10 +48,10 @@ public class Board {
 	Map<Point, Integer> plankton;
 
 	public Board() {
-		minX = -20;
-		miny = -20;
-		maxX = 20;
-		maxY = 20;
+		minX = 0;
+		miny = 0;
+		maxX = 30;
+		maxY = 30;
 		fische = new ArrayList<>();
 		haie = new ArrayList<>();
 		felsen = new ArrayList<>();
