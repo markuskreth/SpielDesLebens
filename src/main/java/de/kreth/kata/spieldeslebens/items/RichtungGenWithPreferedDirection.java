@@ -25,7 +25,7 @@ public class RichtungGenWithPreferedDirection extends RichtungGen {
 	RichtungGenWithPreferedDirection(final List<Himmelsrichtung> preferedDirections) {
 		super(() -> {
 			final Random random = new Random();
-			return random.nextInt(Himmelsrichtung.values().length + preferedDirections.size());
+			return random.nextInt(Himmelsrichtung.values().length + preferedDirections.size() - 1);
 		});
 		this.preferedDirections = new ArrayList<>(preferedDirections);
 	}

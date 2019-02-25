@@ -10,12 +10,15 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import de.kreth.kata.spieldeslebens.events.ItemDiedEvent;
 import de.kreth.kata.spieldeslebens.events.ItemEvent;
 import de.kreth.kata.spieldeslebens.events.ItemListener;
 import de.kreth.kata.spieldeslebens.events.ItemPositionEvent;
+import de.kreth.kata.spieldeslebens.events.ItemReproductionEvent;
 import de.kreth.kata.spieldeslebens.events.PlanktonChangeEvent;
 import de.kreth.kata.spieldeslebens.items.AbstractFisch;
 import de.kreth.kata.spieldeslebens.items.AbstractLebewesen;
@@ -28,197 +31,242 @@ import de.kreth.kata.spieldeslebens.ozean.Point;
 
 public class Board {
 
-  private final Logger logger = LogManager.getLogger(getClass());
+	private final Logger logger = LogManager.getLogger(getClass());
 
-  private final List<ItemListener> itemListeners = Collections.synchronizedList(new ArrayList<>());
+	private final List<ItemListener> itemListeners = Collections.synchronizedList(new ArrayList<>());
 
-  private final Executor eventExecutor = Executors.newSingleThreadExecutor();
+	private final Executor eventExecutor = Executors.newSingleThreadExecutor();
 
-  final Point upperLeftCorner;
+	private final Executor businessExecutor = Executors.newSingleThreadExecutor();
 
-  final Point lowerRightCorner;
+	final Point upperLeftCorner;
 
-  List<Fisch> fische;
+	final Point lowerRightCorner;
 
-  List<Hai> haie;
+	List<Fisch> fische;
 
-  List<Felsen> felsen;
+	List<Hai> haie;
 
-  Map<Point, Integer> plankton;
-  PointRandomizer planktonRandomizer;
+	List<Felsen> felsen;
 
-  private int planktonPerTick;
+	Map<Point, Integer> plankton;
 
-  private int reproductionPercent;
+	PointRandomizer planktonRandomizer;
 
-  public Board(Configuration config) {
-    upperLeftCorner = new Point(0, 0);
-    lowerRightCorner = new Point(config.getWidth(), config.getHeight());
-    planktonRandomizer = new PointRandomizer(config.getWidth(), config.getHeight());
+	private int planktonPerTick;
 
-    planktonPerTick = config.getPlanktonPerTick();
-    reproductionPercent = config.getReproductionPercent();
+	private int reproductionPercent;
 
-    fische = new ArrayList<>();
-    haie = new ArrayList<>();
-    felsen = new ArrayList<>();
-    plankton = new HashMap<>();
-    config.getRocks().forEach(r -> addFelsen(r));
-    config.getSharks().forEach(s -> add(s));
-    config.getFishes().forEach(f -> add(f));
-  }
+	public Board(Configuration config) {
+		upperLeftCorner = new Point(0, 0);
+		lowerRightCorner = new Point(config.getWidth(), config.getHeight());
+		planktonRandomizer = new PointRandomizer(config.getWidth(), config.getHeight());
 
-  public void add(final ItemListener l) {
-    itemListeners.add(l);
-  }
+		planktonPerTick = config.getPlanktonPerTick();
+		reproductionPercent = config.getReproductionPercent();
 
-  private synchronized void fireEvent(ItemEvent<?> ev) {
-    eventExecutor.execute(() -> {
-      for (ItemListener l : itemListeners) {
-        l.itemChange(ev);
-      }
-    });
-  }
+		fische = new ArrayList<>();
+		haie = new ArrayList<>();
+		felsen = new ArrayList<>();
+		plankton = new HashMap<>();
+		config.getRocks().forEach(r -> addFelsen(r));
+		config.getSharks().forEach(s -> add(s));
+		config.getFishes().forEach(f -> add(f));
+	}
 
-  private void add(final Fisch fisch) {
-    fische.add(fisch);
-    fireEvent(new ItemPositionEvent<Fisch>(fisch, Optional.empty()));
-  }
+	public void add(final ItemListener l) {
+		itemListeners.add(l);
+	}
 
-  private void add(final Hai hai) {
-    haie.add(hai);
-    fireEvent(new ItemPositionEvent<Hai>(hai, Optional.empty()));
-  }
+	private synchronized void fireEvent(ItemEvent<?> ev) {
+		eventExecutor.execute(() -> {
+			for (ItemListener l : itemListeners) {
+				l.itemChange(ev);
+			}
+		});
+	}
 
-  private void addFelsen(final Felsen e) {
-    this.felsen.add(e);
-    fireEvent(new ItemPositionEvent<Felsen>(e, Optional.empty()));
+	public int getFischeCount() {
+		return fische.size();
+	}
 
-  }
+	public int getHaieCount() {
+		return haie.size();
+	}
 
-  public Point getUpperLeftCorner() {
-    return upperLeftCorner;
-  }
+	private void add(final Fisch fisch) {
+		fische.add(fisch);
+		fireEvent(new ItemPositionEvent<Fisch>(fisch, Optional.empty()));
+	}
 
-  public Point getLowerRightCorner() {
-    return lowerRightCorner;
-  }
+	private void add(final Hai hai) {
+		haie.add(hai);
+		fireEvent(new ItemPositionEvent<Hai>(hai, Optional.empty()));
+	}
 
-  public boolean isOccupied(final Point position) {
-    if (position.getX() < upperLeftCorner.getX() || position.getX() > lowerRightCorner.getX()
-        || position.getY() < upperLeftCorner.getY() || position.getY() > lowerRightCorner.getY()) {
-      return true;
-    }
-    for (final WithPosition fels : felsen) {
-      if (fels.currentPosition().equals(position)) {
-        return true;
-      }
-    }
+	private void addFelsen(final Felsen e) {
+		this.felsen.add(e);
+		fireEvent(new ItemPositionEvent<Felsen>(e, Optional.empty()));
 
-    return getOccupation(position).isPresent();
-  }
+	}
 
-  public Optional<WithPosition> getOccupation(final Point position) {
+	public Point getUpperLeftCorner() {
+		return upperLeftCorner;
+	}
 
-    final List<AbstractLebewesen<?>> occupied = new ArrayList<>();
-    occupied.addAll(fische);
-    occupied.addAll(haie);
-    for (final AbstractLebewesen<?> occupation : occupied) {
-      if (occupation.isAlive() && occupation.currentPosition().equals(position)) {
-        return Optional.of(occupation);
-      }
-    }
-    return Optional.empty();
-  }
+	public Point getLowerRightCorner() {
+		return lowerRightCorner;
+	}
 
-  void withAll(Consumer<AbstractLebewesen<?>> consumer) {
+	public boolean isOccupied(final Point position) {
+		if (position.getX() < upperLeftCorner.getX()
+				|| position.getX() >= lowerRightCorner.getX()
+				|| position.getY() < upperLeftCorner.getY()
+				|| position.getY() >= lowerRightCorner.getY()) {
+			return true;
+		}
+		for (final WithPosition fels : felsen) {
+			if (fels.currentPosition().equals(position)) {
+				return true;
+			}
+		}
 
-    final List<AbstractLebewesen<?>> lebewesen = new ArrayList<>();
-    lebewesen.addAll(fische);
-    lebewesen.addAll(haie);
-    for (final AbstractLebewesen<?> l : lebewesen) {
-      consumer.accept(l);
-    }
-  }
+		return getOccupation(position).isPresent();
+	}
 
-  public synchronized void timerTick() throws InterruptedException {
+	public Optional<WithPosition> getOccupation(final Point position) {
 
-    for (int i = 0; i < planktonPerTick; i++) {
-      Point planktonItem = planktonRandomizer.create();
-      if (!plankton.containsKey(planktonItem)) {
-        plankton.put(planktonItem, 0);
-      }
-      plankton.put(planktonItem, plankton.get(planktonItem) + 1);
-      fireEvent(new PlanktonChangeEvent(
-          new Plankton(planktonItem, plankton.get(planktonItem).intValue())));
-    }
+		final List<AbstractLebewesen<?>> occupied = new ArrayList<>();
+		occupied.addAll(fische);
+		occupied.addAll(haie);
+		for (final AbstractLebewesen<?> occupation : occupied) {
+			if (occupation.isAlive() && occupation.currentPosition().equals(position)) {
+				return Optional.of(occupation);
+			}
+		}
+		return Optional.empty();
+	}
 
-    for (final Fisch f : new ArrayList<>(fische)) {
-      if (f.isAlive()) {
-        fische.remove(f);
+	void withAll(Consumer<AbstractLebewesen<?>> consumer) {
 
-        if (new Random().nextInt(100 + 1) <= reproductionPercent) {
-          logger.info("{} pflanzt sich fort.", f);
-          List<Fisch> children = f.fortpflanzen();
-          fireEvent(new ItemDiedEvent<>(f));
-          for (Fisch child : children) {
-            moveFisch(child);
-          }
+		final List<AbstractLebewesen<?>> lebewesen = new ArrayList<>();
+		lebewesen.addAll(fische);
+		lebewesen.addAll(haie);
+		for (final AbstractLebewesen<?> l : lebewesen) {
+			consumer.accept(l);
+		}
+	}
 
-        } else {
-          moveFisch(f);
-        }
+	public synchronized void timerTick() throws InterruptedException {
 
-      } else {
-        fische.remove(f);
-        fireEvent(new ItemDiedEvent<>(f));
-      }
-    }
-    for (final Hai h : new ArrayList<>(haie)) {
-      if (h.isAlive()) {
-        haie.remove(h);
+		for (int i = 0; i < planktonPerTick; i++) {
+			Point planktonItem = planktonRandomizer.create();
+			if (!plankton.containsKey(planktonItem)) {
+				plankton.put(planktonItem, 0);
+			}
+			plankton.put(planktonItem, plankton.get(planktonItem) + 1);
+			fireEvent(new PlanktonChangeEvent(
+					new Plankton(planktonItem, plankton.get(planktonItem).intValue())));
+		}
+		businessExecutor.execute(() -> {
+			updateFish();
+		});
+		businessExecutor.execute(() -> {
+			updateShark();
+		});
+	}
 
-        for (Fisch f : fische) {
-          if (Math.abs(f.currentPosition().getX() - h.currentPosition().getX()) <= 1
-              && Math.abs(f.currentPosition().getY() - h.currentPosition().getY()) <= 1) {
-            h.eat(f);
-            break;
-          }
-        }
+	public void updateShark() {
+		for (final Hai h : new ArrayList<>(haie)) {
+			if (h.isAlive()) {
+				haie.remove(h);
+				eatFish(h);
 
-        Hai move = move(h);
-        haie.add(move);
-      } else {
-        haie.remove(h);
-        fireEvent(new ItemDiedEvent<>(h));
-      }
-    }
-  }
+				if (new Random().nextInt(100 + 1) <= reproductionPercent) {
+					reproduceItem(h);
+				}
+				else {
+					haie.add(move(h));
+				}
+			}
+			else {
+				haie.remove(h);
+				logger.debug("Died: {}", h);
+				fireEvent(new ItemDiedEvent<>(h));
+			}
+		}
+	}
 
-  public void moveFisch(final Fisch f) {
-    Fisch move = move(f);
-    Integer p = plankton.get(move.currentPosition());
-    if (p != null) {
-      Plankton planktionItem = new Plankton(move.currentPosition(), p);
-      move.eat(planktionItem);
-      plankton.put(move.currentPosition(), 0);
-      fireEvent(new PlanktonChangeEvent(planktionItem));
-    }
-    fische.add(move);
-  }
+	public void updateFish() {
+		for (final Fisch f : new ArrayList<>(fische)) {
+			if (f.isAlive()) {
+				fische.remove(f);
 
-  @SuppressWarnings("unchecked")
-  public <T extends AbstractFisch<? extends AbstractFisch<?, ?>, ?>> T move(T f) {
-    Point old = f.currentPosition();
+				if (new Random().nextInt(100 + 1) <= reproductionPercent) {
+					reproduceItem(f);
+				}
+				else {
+					moveFisch(f);
+				}
 
-    f = (T) f.move(Board.this::isOccupied);
-    f.decreaseWeight();
+			}
+			else {
+				fische.remove(f);
+				logger.debug("Died: {}", f);
+				fireEvent(new ItemDiedEvent<>(f));
+			}
+		}
+	}
 
-    if (!old.equals(f.currentPosition())) {
-      fireEvent(new ItemPositionEvent<AbstractFisch<?, ?>>(f, Optional.of(old)));
-      logger.debug(f + " moved from " + old);
-    }
-    return f;
-  }
+	public void eatFish(final Hai h) {
+		for (Fisch f : fische) {
+			if (Math.abs(f.currentPosition().getX() - h.currentPosition().getX()) <= 1
+					&& Math.abs(f.currentPosition().getY() - h.currentPosition().getY()) <= 1) {
+				h.eat(f);
+				break;
+			}
+		}
+	}
+
+	public <T extends AbstractFisch<?, ?>> void reproduceItem(final T f) {
+		logger.info("{} pflanzt sich fort.", f);
+		@SuppressWarnings("unchecked")
+		List<T> children = (List<T>) f.fortpflanzen();
+		fireEvent(new ItemReproductionEvent<>(f, children));
+		for (T child : children) {
+			if (child instanceof Fisch) {
+				moveFisch((Fisch) child);
+			}
+			else if (child instanceof Hai) {
+				haie.add((Hai) move(child));
+			}
+		}
+	}
+
+	public void moveFisch(final Fisch f) {
+		Fisch move = move(f);
+		Integer p = plankton.get(move.currentPosition());
+		if (p != null) {
+			Plankton planktionItem = new Plankton(move.currentPosition(), p);
+			move.eat(planktionItem);
+			plankton.put(move.currentPosition(), 0);
+			fireEvent(new PlanktonChangeEvent(planktionItem));
+		}
+		fische.add(move);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends AbstractFisch<? extends AbstractFisch<?, ?>, ?>> T move(T f) {
+		Point old = f.currentPosition();
+
+		f = (T) f.move(Board.this::isOccupied);
+		f.decreaseWeight();
+
+		if (!old.equals(f.currentPosition())) {
+			fireEvent(new ItemPositionEvent<AbstractFisch<?, ?>>(f, Optional.of(old)));
+			logger.debug(f + " moved from " + old);
+		}
+		return f;
+	}
 
 }
