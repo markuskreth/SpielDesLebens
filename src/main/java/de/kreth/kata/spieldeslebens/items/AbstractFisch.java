@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-
 import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
