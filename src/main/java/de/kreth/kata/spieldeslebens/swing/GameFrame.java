@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -58,13 +56,11 @@ public class GameFrame extends JFrame implements ItemListener {
 
 	private Map<Point, OceanField> pointToPanelMap = new HashMap<>();
 
-	private JLabel fischCount;
-
-	private JLabel sharkCount;
-
 	private JSlider speedslider;
 
 	private JToggleButton startStopToggle;
+
+	private StatisticComponent statisticUI;
 
 	public GameFrame(Board board) {
 		super();
@@ -77,7 +73,26 @@ public class GameFrame extends JFrame implements ItemListener {
 		createBoardPanel(board);
 		add(boardPanel, BorderLayout.CENTER);
 
-		JPanel buttonPanel = createButtons();
+		createButtons();
+		statisticUI = new StatisticComponent();
+		JPanel speedPanel = createSpeedSlider();
+
+		JPanel northWest = new JPanel();
+		northWest.setLayout(new BoxLayout(northWest, BoxLayout.Y_AXIS));
+		northWest.add(startStopToggle);
+		northWest.add(speedPanel);
+
+		JPanel north = new JPanel();
+		north.setLayout(new BoxLayout(north, BoxLayout.X_AXIS));
+		north.add(northWest);
+		north.add(statisticUI);
+
+		add(north, BorderLayout.NORTH);
+		board.fireItemInitEvents();
+		pack();
+	}
+
+	public JPanel createSpeedSlider() {
 		speedslider = new JSlider(0, 100);
 		speedslider.addChangeListener(this::speedChanged);
 		speedslider.setMajorTickSpacing(25);
@@ -88,15 +103,7 @@ public class GameFrame extends JFrame implements ItemListener {
 		JPanel speedPanel = new JPanel(new FlowLayout());
 		speedPanel.add(speed);
 		speedPanel.add(speedslider);
-
-		JPanel north = new JPanel();
-		north.setLayout(new BoxLayout(north, BoxLayout.Y_AXIS));
-		north.add(buttonPanel);
-		north.add(speedPanel);
-
-		add(north, BorderLayout.NORTH);
-		board.fireItemInitEvents();
-		pack();
+		return speedPanel;
 	}
 
 	private void speedChanged(ChangeEvent ev) {
@@ -107,26 +114,11 @@ public class GameFrame extends JFrame implements ItemListener {
 		start();
 	}
 
-	public JPanel createButtons() {
-		JPanel buttonPanel = new JPanel(new FlowLayout());
-
+	public void createButtons() {
 		startStopToggle = new JToggleButton("Start", false);
 		startStopToggle.addActionListener(ev -> toggleGame(ev));
 		startStopToggle.isSelected();
-		buttonPanel.add(startStopToggle);
-		JLabel fishLabel = new JLabel(
-				new ImageIcon(OceanField.FISCH.getScaledInstance(16, 16, BufferedImage.SCALE_SMOOTH)));
-		fischCount = new JLabel();
-		buttonPanel.add(fishLabel);
-		buttonPanel.add(fischCount);
-		JLabel haiLabel = new JLabel(
-				new ImageIcon(OceanField.SHARK.getScaledInstance(16, 16, BufferedImage.SCALE_SMOOTH)));
-		sharkCount = new JLabel();
 
-		buttonPanel.add(haiLabel);
-		buttonPanel.add(sharkCount);
-
-		return buttonPanel;
 	}
 
 	private void toggleGame(ActionEvent ev) {
@@ -201,8 +193,6 @@ public class GameFrame extends JFrame implements ItemListener {
 			throw new RuntimeException("Error setting Item: " + ev, e);
 		}
 
-		fischCount.setText(String.valueOf(board.getFischeCount()));
-		sharkCount.setText(String.valueOf(board.getHaieCount()));
 	}
 
 	private void resetField(Point old, Point current) {
@@ -311,6 +301,7 @@ public class GameFrame extends JFrame implements ItemListener {
 				logger.trace("Timer executes Ticker");
 				board.timerTick();
 				repaint();
+				statisticUI.update(board.createStatistik());
 			}
 			catch (final InterruptedException e) {
 				logger.error("Timer Task not executed", e);

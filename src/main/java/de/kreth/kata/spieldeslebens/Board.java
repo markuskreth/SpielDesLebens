@@ -84,12 +84,11 @@ public class Board {
 		});
 	}
 
-	public int getFischeCount() {
-		return fische.size();
-	}
-
-	public int getHaieCount() {
-		return haie.size();
+	public Statistik createStatistik() {
+		return new Statistik.Builder()
+				.setFishCount(fische.size())
+				.setSharkCount(haie.size())
+				.build();
 	}
 
 	private void add(final Fisch fisch) {
