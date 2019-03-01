@@ -67,26 +67,8 @@ class OceanField extends JPanel {
 
 	private void paintIcon(Graphics2D g2d) {
 		Image scaledInstance;
+		g2d.setColor(Color.BLACK);
 		switch (icon) {
-		case EMPTY:
-			if (sign != null) {
-				switch (state) {
-				case 4:
-					g2d.setColor(Color.BLACK);
-					break;
-				case 3:
-					g2d.setColor(Color.DARK_GRAY);
-					break;
-				case 2:
-					g2d.setColor(Color.GRAY);
-					break;
-				case 1:
-					g2d.setColor(Color.LIGHT_GRAY);
-					break;
-				}
-				g2d.drawString(sign.toString(), 2, 18);
-			}
-			break;
 		case FISH:
 			scaledInstance = FISCH.getScaledInstance(getWidth(), getHeight(), BufferedImage.SCALE_SMOOTH);
 			g2d.drawImage(scaledInstance, 1, 1, this);
@@ -94,19 +76,40 @@ class OceanField extends JPanel {
 		case ROCK:
 			g2d.setColor(Color.DARK_GRAY);
 			g2d.fillRect(2, 2, getWidth() - 4, getHeight() - 4);
-			g2d.setColor(Color.WHITE);
-			g2d.drawString("R", 2, 18);
 			break;
 		case SHARK:
 			scaledInstance = SHARK.getScaledInstance(getWidth(), getHeight(), BufferedImage.SCALE_SMOOTH);
 			g2d.drawImage(scaledInstance, 1, 1, this);
 			break;
+		case EMPTY:
+			break;
 		default:
 			break;
 		}
-		if (plankton != null) {
+		g2d.setColor(Color.BLACK);
+		if (plankton != null && icon != Icon.ROCK) {
 			g2d.drawString(String.valueOf(plankton.getWeight()), 15, 10);
 		}
+
+		if (sign != null) {
+			switch (state) {
+			case 4:
+				g2d.setColor(Color.BLACK);
+				break;
+			case 3:
+				g2d.setColor(Color.DARK_GRAY);
+				break;
+			case 2:
+				g2d.setColor(Color.GRAY);
+				break;
+			case 1:
+				g2d.setColor(Color.LIGHT_GRAY);
+				break;
+			}
+
+			g2d.drawString(sign.toString(), 2, 18);
+		}
+		g2d.setColor(Color.BLACK);
 	}
 
 	public void setSign(Himmelsrichtung richtung, int state) {
@@ -138,34 +141,35 @@ class OceanField extends JPanel {
 			}
 		}
 		this.state = state;
-		repaint();
 	}
 
 	public void setEmpty() {
 		logger.trace("Clearing " + point);
 		icon = Icon.EMPTY;
-		repaint();
 	}
 
 	public void setFish() {
 
 		logger.trace("Setting FISH at " + point);
 		icon = Icon.FISH;
-		repaint();
 	}
 
 	public void setShark() {
 		logger.trace("Setting SHARK at " + point);
 		icon = Icon.SHARK;
-		repaint();
+	}
+
+	public void setPlankton(Plankton item) {
+		this.plankton = item;
 	}
 
 	public Point getPoint() {
 		return point;
 	}
 
-	public void setPlankton(Plankton item) {
-		this.plankton = item;
+	public void setFelsen() {
+		logger.trace("Setting ROCK at " + point);
+		icon = Icon.ROCK;
 	}
 
 }

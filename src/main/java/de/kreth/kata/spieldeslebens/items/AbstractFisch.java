@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+
 import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
@@ -25,7 +26,9 @@ public abstract class AbstractFisch<THIS extends AbstractFisch<?, ?>, DIR extend
 		final Himmelsrichtung himmelsrichtung = richtungGen.next();
 		final Point newPosition = currentPosition().move(himmelsrichtung);
 		if (!veto.test(newPosition)) {
-			return createWithStartPoint(newPosition, richtungGen);
+			THIS created = createWithStartPoint(newPosition, richtungGen);
+			created.weight = this.weight;
+			return created;
 		}
 		else {
 			return (THIS) this;
@@ -33,7 +36,6 @@ public abstract class AbstractFisch<THIS extends AbstractFisch<?, ?>, DIR extend
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public List<THIS> fortpflanzen() {
 		final List<THIS> kinder = new ArrayList<>();
 
@@ -42,14 +44,15 @@ public abstract class AbstractFisch<THIS extends AbstractFisch<?, ?>, DIR extend
 		copy.weight = divided[0].intValue();
 
 		kinder.add(copy);
+		copy = this.copy();
 
 		if (divided[1].equals(BigInteger.ZERO)) {
-			this.weight = divided[0].intValue();
+			copy.weight = divided[0].intValue();
 		}
 		else {
-			this.weight = divided[0].intValue() + 1;
+			copy.weight = divided[0].intValue() + 1;
 		}
-		kinder.add((THIS) this);
+		kinder.add(copy);
 		return kinder;
 	}
 

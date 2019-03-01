@@ -32,6 +32,7 @@ import de.kreth.kata.spieldeslebens.events.ItemDiedEvent;
 import de.kreth.kata.spieldeslebens.events.ItemEvent;
 import de.kreth.kata.spieldeslebens.events.ItemListener;
 import de.kreth.kata.spieldeslebens.events.ItemPositionEvent;
+import de.kreth.kata.spieldeslebens.items.Felsen;
 import de.kreth.kata.spieldeslebens.items.Fisch;
 import de.kreth.kata.spieldeslebens.items.Hai;
 import de.kreth.kata.spieldeslebens.items.Plankton;
@@ -63,6 +64,8 @@ public class GameFrame extends JFrame implements ItemListener {
 
 	private JSlider speedslider;
 
+	private JToggleButton startStopToggle;
+
 	public GameFrame(Board board) {
 		super();
 		timer = new Timer("Game Timer");
@@ -77,6 +80,10 @@ public class GameFrame extends JFrame implements ItemListener {
 		JPanel buttonPanel = createButtons();
 		speedslider = new JSlider(0, 100);
 		speedslider.addChangeListener(this::speedChanged);
+		speedslider.setMajorTickSpacing(25);
+		speedslider.setMinorTickSpacing(5);
+		speedslider.setPaintTicks(true);
+		speedslider.setPaintLabels(true);
 		JLabel speed = new JLabel("Geschwindigkeit");
 		JPanel speedPanel = new JPanel(new FlowLayout());
 		speedPanel.add(speed);
@@ -88,19 +95,25 @@ public class GameFrame extends JFrame implements ItemListener {
 		north.add(speedPanel);
 
 		add(north, BorderLayout.NORTH);
+		board.fireItemInitEvents();
 		pack();
 	}
 
 	private void speedChanged(ChangeEvent ev) {
+		if (startStopToggle.isSelected() == false) {
+			logger.debug("Prepared Speed to " + speedslider.getValue());
+		}
 		stop();
 		start();
 	}
 
 	public JPanel createButtons() {
 		JPanel buttonPanel = new JPanel(new FlowLayout());
-		JToggleButton startStop = new JToggleButton("Start", false);
-		startStop.addActionListener(ev -> toggleGame(ev));
-		buttonPanel.add(startStop);
+
+		startStopToggle = new JToggleButton("Start", false);
+		startStopToggle.addActionListener(ev -> toggleGame(ev));
+		startStopToggle.isSelected();
+		buttonPanel.add(startStopToggle);
 		JLabel fishLabel = new JLabel(
 				new ImageIcon(OceanField.FISCH.getScaledInstance(16, 16, BufferedImage.SCALE_SMOOTH)));
 		fischCount = new JLabel();
@@ -141,10 +154,10 @@ public class GameFrame extends JFrame implements ItemListener {
 
 		for (int x = upperLeftCorner.getX(); x < lowerRightCorner.getX(); x++) {
 			for (int y = upperLeftCorner.getY(); y < lowerRightCorner.getY(); y++) {
-				OceanField field = new OceanField();
+				final OceanField field = new OceanField();
 				field.point = new Point(x, y);
+				field.setToolTipText(field.point.toString());
 				points.add(field.point);
-
 				pointToPanelMap.put(field.point, field);
 				boardPanel.add(field);
 			}
@@ -162,19 +175,26 @@ public class GameFrame extends JFrame implements ItemListener {
 				positionEvent.getOldPosition()
 						.ifPresent(p -> resetField(p, positionEvent.getItem().currentPosition()));
 				WithPosition item = positionEvent.getItem();
+				OceanField oceanField = pointToPanelMap.get(item.currentPosition());
 				if (item instanceof Fisch) {
-					pointToPanelMap.get(item.currentPosition()).setFish();
+					oceanField.setFish();
+					oceanField.setToolTipText(oceanField.point.toString() + ": " + item);
 				}
 				else if (item instanceof Hai) {
-					pointToPanelMap.get(item.currentPosition()).setShark();
+					oceanField.setShark();
+					oceanField.setToolTipText(oceanField.point.toString() + ": " + item);
 				}
 				else if (item instanceof Plankton) {
-					pointToPanelMap.get(item.currentPosition()).setPlankton((Plankton) item);
+					oceanField.setPlankton((Plankton) item);
+				}
+				else if (item instanceof Felsen) {
+					oceanField.setFelsen();
 				}
 			}
 			else if (ev instanceof ItemDiedEvent<?>) {
 				OceanField field = pointToPanelMap.get(((WithPosition) ev.getItem()).currentPosition());
 				field.setEmpty();
+				field.setToolTipText(field.point.toString());
 			}
 		}
 		catch (NullPointerException e) {
@@ -187,23 +207,86 @@ public class GameFrame extends JFrame implements ItemListener {
 
 	private void resetField(Point old, Point current) {
 		this.pointToPanelMap.get(old).setEmpty();
-		timer.scheduleAtFixedRate(
-				new OceanFieldFadeTask(this.pointToPanelMap.get(old), old.to(current)), 0,
-				speedslider.getValue() * 10L);
+		if (speedslider.getValue() > 0) {
+			timer.scheduleAtFixedRate(
+					new OceanFieldFadeTask(this.pointToPanelMap.get(old), old.to(current)), 0,
+					speedslider.getValue() * 10L);
+		}
+		else {
+			new OceanFieldFadeTask(this.pointToPanelMap.get(old), old.to(current)).run();
+		}
 	}
 
 	public void start() {
 		if (timerLock.tryLock()) {
 			try {
-				if (task == null && speedslider.getValue() > 0) {
+				if (startStopToggle.isSelected() && speedslider.getValue() > 0) {
 					task = new GameTask();
-					timer.scheduleAtFixedRate(task, 0, speedslider.getValue() * 10L);
+					long period = calcPeriod();
+					logger.info("Starting Game with Speed " + period);
+					timer.scheduleAtFixedRate(task, 0, period);
 				}
 			}
 			finally {
 				timerLock.unlock();
 			}
 		}
+	}
+
+	/**
+	 * <pre>
+	 * Expected	speed
+	2000	1
+	1500	10
+	1000	20
+	800	30
+	600	40
+	400	50
+	300	60
+	200	70
+	100	80
+	50	90
+	25	100
+	 * 
+	 * </pre>
+	 * 
+	 * @return
+	 */
+	private long calcPeriod() {
+		if (speedslider.getValue() > 90) {
+			return 25L;
+		}
+		else if (speedslider.getValue() <= 2) {
+			return 2000L;
+		}
+		else if (speedslider.getValue() <= 10) {
+			return 1500L;
+		}
+		else if (speedslider.getValue() <= 20) {
+			return 1000L;
+		}
+		else if (speedslider.getValue() <= 30) {
+			return 800L;
+		}
+		else if (speedslider.getValue() <= 40) {
+			return 600L;
+		}
+		else if (speedslider.getValue() <= 50) {
+			return 400L;
+		}
+		else if (speedslider.getValue() <= 60) {
+			return 300L;
+		}
+		else if (speedslider.getValue() <= 70) {
+			return 200L;
+		}
+		else if (speedslider.getValue() <= 80) {
+			return 100L;
+		}
+		else if (speedslider.getValue() <= 90) {
+			return 50L;
+		}
+		return 0;
 	}
 
 	public void stop() {
@@ -227,6 +310,7 @@ public class GameFrame extends JFrame implements ItemListener {
 			try {
 				logger.trace("Timer executes Ticker");
 				board.timerTick();
+				repaint();
 			}
 			catch (final InterruptedException e) {
 				logger.error("Timer Task not executed", e);

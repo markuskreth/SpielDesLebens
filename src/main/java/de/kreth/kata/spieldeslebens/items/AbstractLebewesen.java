@@ -36,4 +36,40 @@ public abstract class AbstractLebewesen<THIS extends AbstractLebewesen<?>> imple
 	public String toString() {
 		return "currentPosition=" + currentPosition + ", weight=" + weight;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((currentPosition == null) ? 0 : currentPosition.hashCode());
+		result = prime * result + weight;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		AbstractLebewesen<?> other = (AbstractLebewesen<?>) obj;
+		if (currentPosition == null) {
+			if (other.currentPosition != null) {
+				return false;
+			}
+		}
+		else if (!currentPosition.equals(other.currentPosition)) {
+			return false;
+		}
+		if (weight != other.weight) {
+			return false;
+		}
+		return true;
+	}
+
 }

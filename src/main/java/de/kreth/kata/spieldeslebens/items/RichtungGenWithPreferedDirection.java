@@ -12,8 +12,9 @@ public class RichtungGenWithPreferedDirection extends RichtungGen {
 
 	@SafeVarargs
 	private static <E> List<E> join(final List<E> list, final E... preferedDirections) {
-		list.addAll(Arrays.asList(preferedDirections));
-		return list;
+		List<E> result = new ArrayList<>(list);
+		result.addAll(Arrays.asList(preferedDirections));
+		return result;
 	}
 
 	private final List<Himmelsrichtung> preferedDirections;
@@ -27,7 +28,7 @@ public class RichtungGenWithPreferedDirection extends RichtungGen {
 			final Random random = new Random();
 			return random.nextInt(Himmelsrichtung.values().length + preferedDirections.size() - 1);
 		});
-		this.preferedDirections = new ArrayList<>(preferedDirections);
+		this.preferedDirections = Collections.unmodifiableList(new ArrayList<>(preferedDirections));
 	}
 
 	RichtungGenWithPreferedDirection(final RichtungGenWithPreferedDirection old) {

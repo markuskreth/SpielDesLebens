@@ -37,8 +37,6 @@ public class Board {
 
 	private final Executor eventExecutor = Executors.newSingleThreadExecutor();
 
-	private final Executor businessExecutor = Executors.newSingleThreadExecutor();
-
 	final Point upperLeftCorner;
 
 	final Point lowerRightCorner;
@@ -107,7 +105,18 @@ public class Board {
 	private void addFelsen(final Felsen e) {
 		this.felsen.add(e);
 		fireEvent(new ItemPositionEvent<Felsen>(e, Optional.empty()));
+	}
 
+	public void fireItemInitEvents() {
+		for (Felsen e : felsen) {
+			fireEvent(new ItemPositionEvent<Felsen>(e, Optional.empty()));
+		}
+		for (Hai hai : haie) {
+			fireEvent(new ItemPositionEvent<Hai>(hai, Optional.empty()));
+		}
+		for (Fisch fisch : fische) {
+			fireEvent(new ItemPositionEvent<Fisch>(fisch, Optional.empty()));
+		}
 	}
 
 	public Point getUpperLeftCorner() {
@@ -168,12 +177,8 @@ public class Board {
 			fireEvent(new PlanktonChangeEvent(
 					new Plankton(planktonItem, plankton.get(planktonItem).intValue())));
 		}
-		businessExecutor.execute(() -> {
-			updateFish();
-		});
-		businessExecutor.execute(() -> {
-			updateShark();
-		});
+		updateFish();
+		updateShark();
 	}
 
 	public void updateShark() {
@@ -186,7 +191,13 @@ public class Board {
 					reproduceItem(h);
 				}
 				else {
-					haie.add(move(h));
+					Hai moved = move(h);
+					if (moved.isAlive()) {
+						haie.add(moved);
+					}
+					else {
+						fireEvent(new ItemDiedEvent<>(h));
+					}
 				}
 			}
 			else {
@@ -229,16 +240,22 @@ public class Board {
 	}
 
 	public <T extends AbstractFisch<?, ?>> void reproduceItem(final T f) {
-		logger.info("{} pflanzt sich fort.", f);
 		@SuppressWarnings("unchecked")
 		List<T> children = (List<T>) f.fortpflanzen();
+		logger.info("{} pflanzt sich fort -> {}", f, children);
 		fireEvent(new ItemReproductionEvent<>(f, children));
 		for (T child : children) {
 			if (child instanceof Fisch) {
 				moveFisch((Fisch) child);
 			}
 			else if (child instanceof Hai) {
-				haie.add((Hai) move(child));
+				Hai movedHai = (Hai) move(child);
+				if (movedHai.isAlive()) {
+					haie.add(movedHai);
+				}
+				else {
+					fireEvent(new ItemDiedEvent<>(child));
+				}
 			}
 		}
 	}
@@ -256,17 +273,17 @@ public class Board {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends AbstractFisch<? extends AbstractFisch<?, ?>, ?>> T move(T f) {
-		Point old = f.currentPosition();
+	public <T extends AbstractFisch<? extends AbstractFisch<?, ?>, ?>> T move(final T creature) {
+		Point old = creature.currentPosition();
 
-		f = (T) f.move(Board.this::isOccupied);
-		f.decreaseWeight();
+		T moved = (T) creature.move(Board.this::isOccupied);
+		moved.decreaseWeight();
 
-		if (!old.equals(f.currentPosition())) {
-			fireEvent(new ItemPositionEvent<AbstractFisch<?, ?>>(f, Optional.of(old)));
-			logger.debug(f + " moved from " + old);
+		if (!old.equals(moved.currentPosition()) && moved.isAlive()) {
+			fireEvent(new ItemPositionEvent<AbstractFisch<?, ?>>(moved, Optional.of(old)));
+			logger.debug(moved + " moved from " + old);
 		}
-		return f;
+		return moved;
 	}
 
 }

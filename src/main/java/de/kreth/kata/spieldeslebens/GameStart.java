@@ -11,11 +11,11 @@ public class GameStart {
 		Configuration config = Configuration.builder()
 				.setWidth(30)
 				.setHeight(30)
-				.setFishCount(15)
-				.setSharkCount(5)
-				.setRockCount(5)
-				.setPlanktonPerTick(500)
-				.setReproductionPercent(40)
+				.setFishCount(400)
+				.setSharkCount(100)
+				.setRockCount(20)
+				.setPlanktonPerTick(350)
+				.setReproductionPercent(20)
 				.build();
 		Board b = new Board(config);
 		final GameFrame frame = new GameFrame(b);
