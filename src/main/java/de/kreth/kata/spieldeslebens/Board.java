@@ -37,19 +37,19 @@ public class Board {
 
 	private final Executor eventExecutor = Executors.newSingleThreadExecutor();
 
-	final Point upperLeftCorner;
+	private final Point upperLeftCorner;
 
-	final Point lowerRightCorner;
+	private final Point lowerRightCorner;
 
-	List<Fisch> fische;
+	private List<Fisch> fische;
 
-	List<Hai> haie;
+	private List<Hai> haie;
 
-	List<Felsen> felsen;
+	private List<Felsen> felsen;
 
-	Map<Point, Integer> plankton;
+	private Map<Point, Integer> plankton;
 
-	PointRandomizer planktonRandomizer;
+	private PointRandomizer planktonRandomizer;
 
 	private int planktonPerTick;
 
@@ -180,14 +180,20 @@ public class Board {
 		updateShark();
 	}
 
-	public void updateShark() {
+	private void updateShark() {
 		for (final Hai h : new ArrayList<>(haie)) {
 			if (h.isAlive()) {
 				haie.remove(h);
 				eatFish(h);
 
 				if (new Random().nextInt(100 + 1) <= reproductionPercent) {
-					reproduceItem(h);
+					List<Hai> children = reproduceItem(h);
+					for (Hai child : children) {
+						Hai movedHai = move(child);
+						if (movedHai.isAlive()) {
+							haie.add(movedHai);
+						}
+					}
 				}
 				else {
 					Hai moved = move(h);
@@ -207,16 +213,34 @@ public class Board {
 		}
 	}
 
-	public void updateFish() {
+	private void updateFish() {
 		for (final Fisch f : new ArrayList<>(fische)) {
 			if (f.isAlive()) {
 				fische.remove(f);
 
 				if (new Random().nextInt(100 + 1) <= reproductionPercent) {
-					reproduceItem(f);
+					List<Fisch> children = reproduceItem(f);
+
+					for (Fisch child : children) {
+						Fisch moved = moveFisch(child);
+						if (moved.isAlive()) {
+							fische.add(moved);
+						}
+						else {
+							logger.debug("Died: {}", f);
+							fireEvent(new ItemDiedEvent<>(child));
+						}
+					}
 				}
 				else {
-					moveFisch(f);
+					Fisch moved = moveFisch(f);
+					if (moved.isAlive()) {
+						fische.add(moved);
+					}
+					else {
+						logger.debug("Died: {}", f);
+						fireEvent(new ItemDiedEvent<>(f));
+					}
 				}
 
 			}
@@ -228,7 +252,7 @@ public class Board {
 		}
 	}
 
-	public void eatFish(final Hai h) {
+	private void eatFish(final Hai h) {
 		for (Fisch f : fische) {
 			if (Math.abs(f.currentPosition().getX() - h.currentPosition().getX()) <= 1
 					&& Math.abs(f.currentPosition().getY() - h.currentPosition().getY()) <= 1) {
@@ -238,28 +262,16 @@ public class Board {
 		}
 	}
 
-	public <T extends AbstractFisch<?, ?>> void reproduceItem(final T f) {
+	private <T extends AbstractFisch<?, ?>> List<T> reproduceItem(final T f) {
 		@SuppressWarnings("unchecked")
 		List<T> children = (List<T>) f.fortpflanzen();
 		logger.info("{} pflanzt sich fort -> {}", f, children);
 		fireEvent(new ItemReproductionEvent<>(f, children));
-		for (T child : children) {
-			if (child instanceof Fisch) {
-				moveFisch((Fisch) child);
-			}
-			else if (child instanceof Hai) {
-				Hai movedHai = (Hai) move(child);
-				if (movedHai.isAlive()) {
-					haie.add(movedHai);
-				}
-				else {
-					fireEvent(new ItemDiedEvent<>(child));
-				}
-			}
-		}
+		return children;
+
 	}
 
-	public void moveFisch(final Fisch f) {
+	private Fisch moveFisch(final Fisch f) {
 		Fisch move = move(f);
 		Integer p = plankton.get(move.currentPosition());
 		if (p != null) {
@@ -268,11 +280,11 @@ public class Board {
 			plankton.put(move.currentPosition(), 0);
 			fireEvent(new PlanktonChangeEvent(planktionItem));
 		}
-		fische.add(move);
+		return move;
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends AbstractFisch<? extends AbstractFisch<?, ?>, ?>> T move(final T creature) {
+	private <T extends AbstractFisch<? extends AbstractFisch<?, ?>, ?>> T move(final T creature) {
 		Point old = creature.currentPosition();
 
 		T moved = (T) creature.move(Board.this::isOccupied);
@@ -281,6 +293,9 @@ public class Board {
 		if (!old.equals(moved.currentPosition()) && moved.isAlive()) {
 			fireEvent(new ItemPositionEvent<AbstractFisch<?, ?>>(moved, Optional.of(old)));
 			logger.debug(moved + " moved from " + old);
+		}
+		else {
+			fireEvent(new ItemDiedEvent<>(creature));
 		}
 		return moved;
 	}
