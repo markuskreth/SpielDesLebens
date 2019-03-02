@@ -24,7 +24,9 @@ public class Fisch extends AbstractFisch<Fisch, RichtungGenWithPreferedDirection
 
 	@Override
 	protected Fisch copy() {
-		return createWithStartPoint(this.currentPosition(), getRichtungGen());
+		Fisch createWithStartPoint = createWithStartPoint(this.currentPosition(), getRichtungGen());
+		createWithStartPoint.weight = this.weight;
+		return createWithStartPoint;
 	}
 
 }

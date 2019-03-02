@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +18,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,6 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.kreth.kata.spieldeslebens.Board;
+import de.kreth.kata.spieldeslebens.PointRandomizer;
 import de.kreth.kata.spieldeslebens.events.ItemDiedEvent;
 import de.kreth.kata.spieldeslebens.events.ItemEvent;
 import de.kreth.kata.spieldeslebens.events.ItemListener;
@@ -62,24 +69,28 @@ public class GameFrame extends JFrame implements ItemListener {
 
 	private StatisticComponent statisticUI;
 
+	private final PointRandomizer itemPointRandomizer;
+
 	public GameFrame(Board board) {
 		super();
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		timer = new Timer("Game Timer");
 		this.board = board;
 		board.add(this);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		itemPointRandomizer = new PointRandomizer(board.getLowerRightCorner().getX(),
+				board.getLowerRightCorner().getY());
 		this.setLayout(new BorderLayout());
 
 		createBoardPanel(board);
 		add(boardPanel, BorderLayout.CENTER);
 
-		createButtons();
+		JComponent controls = createControls();
 		statisticUI = new StatisticComponent();
 		JPanel speedPanel = createSpeedSlider();
 
 		JPanel northWest = new JPanel();
 		northWest.setLayout(new BoxLayout(northWest, BoxLayout.Y_AXIS));
-		northWest.add(startStopToggle);
+		northWest.add(controls);
 		northWest.add(speedPanel);
 
 		JPanel north = new JPanel();
@@ -99,6 +110,15 @@ public class GameFrame extends JFrame implements ItemListener {
 		speedslider.setMinorTickSpacing(5);
 		speedslider.setPaintTicks(true);
 		speedslider.setPaintLabels(true);
+		speedslider.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				super.mouseClicked(e);
+				if (speedslider.getValue() < 1) {
+					new GameTask().run();
+				}
+			}
+		});
 		JLabel speed = new JLabel("Geschwindigkeit");
 		JPanel speedPanel = new JPanel(new FlowLayout());
 		speedPanel.add(speed);
@@ -114,11 +134,35 @@ public class GameFrame extends JFrame implements ItemListener {
 		start();
 	}
 
-	public void createButtons() {
+	public JComponent createControls() {
 		startStopToggle = new JToggleButton("Start", false);
 		startStopToggle.addActionListener(ev -> toggleGame(ev));
 		startStopToggle.isSelected();
 
+		JButton addFisch = new JButton("+",
+				new ImageIcon(OceanField.FISCH.getScaledInstance(24, 24, BufferedImage.SCALE_SMOOTH)));
+		addFisch.addActionListener(ev -> {
+			Point startPosition = itemPointRandomizer.create();
+			while (board.isOccupied(startPosition)) {
+				startPosition = itemPointRandomizer.create();
+			}
+			board.add(new Fisch(startPosition));
+		});
+		JButton addShark = new JButton("+",
+				new ImageIcon(OceanField.SHARK.getScaledInstance(24, 24, BufferedImage.SCALE_SMOOTH)));
+		addShark.addActionListener(ev -> {
+			Point startPosition = itemPointRandomizer.create();
+			while (board.isOccupied(startPosition)) {
+				startPosition = itemPointRandomizer.create();
+			}
+			board.add(new Hai(startPosition));
+		});
+		JPanel panel = new JPanel(new GridLayout(2, 2));
+		panel.add(startStopToggle);
+		panel.add(addFisch);
+		panel.add(new JLabel());
+		panel.add(addShark);
+		return panel;
 	}
 
 	private void toggleGame(ActionEvent ev) {
@@ -247,7 +291,16 @@ public class GameFrame extends JFrame implements ItemListener {
 			return 25L;
 		}
 		else if (speedslider.getValue() <= 2) {
-			return 2000L;
+			return 3000L;
+		}
+		else if (speedslider.getValue() <= 4) {
+			return 2700L;
+		}
+		else if (speedslider.getValue() <= 6) {
+			return 2300L;
+		}
+		else if (speedslider.getValue() <= 8) {
+			return 1900L;
 		}
 		else if (speedslider.getValue() <= 10) {
 			return 1500L;

@@ -30,6 +30,8 @@ public class Hai extends AbstractFisch<Hai, RichtungGen> {
 		}
 		else {
 			Hai createWithStartPoint = createWithStartPoint(eaten.currentPosition(), getRichtungGen());
+			createWithStartPoint.weight = this.weight;
+			this.weight = 0;
 			eaten = null;
 			return createWithStartPoint;
 		}
@@ -47,7 +49,9 @@ public class Hai extends AbstractFisch<Hai, RichtungGen> {
 
 	@Override
 	protected Hai copy() {
-		return createWithStartPoint(this.currentPosition(), getRichtungGen());
+		Hai createWithStartPoint = createWithStartPoint(this.currentPosition(), getRichtungGen());
+		createWithStartPoint.weight = this.weight;
+		return createWithStartPoint;
 	}
 
 }

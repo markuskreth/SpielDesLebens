@@ -28,11 +28,16 @@ public abstract class AbstractFisch<THIS extends AbstractFisch<?, ?>, DIR extend
 		if (!veto.test(newPosition)) {
 			THIS created = createWithStartPoint(newPosition, richtungGen);
 			created.weight = this.weight;
+			this.weight = 0;
 			return created;
 		}
 		else {
 			return (THIS) this;
 		}
+	}
+
+	public boolean sollteFortpflanzen(int random, int fortpflanzen) {
+		return weight > 3 && random <= fortpflanzen + weight;
 	}
 
 	@Override

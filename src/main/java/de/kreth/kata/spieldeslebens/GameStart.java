@@ -12,7 +12,7 @@ public class GameStart {
 				.setWidth(30)
 				.setHeight(30)
 				.setFishCount(400)
-				.setSharkCount(100)
+				.setSharkCount(50)
 				.setRockCount(20)
 				.setPlanktonPerTick(350)
 				.setReproductionPercent(20)

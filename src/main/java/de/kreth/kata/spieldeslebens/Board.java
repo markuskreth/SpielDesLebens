@@ -67,6 +67,14 @@ public class Board {
 		haie = new ArrayList<>();
 		felsen = new ArrayList<>();
 		plankton = new HashMap<>();
+		for (int x = upperLeftCorner.getX(); x < lowerRightCorner.getX(); x++) {
+			for (int y = upperLeftCorner.getY(); y < lowerRightCorner.getY(); y++) {
+				Point key = new Point(x, y);
+				plankton.put(key, 1);
+				fireEvent(new PlanktonChangeEvent(
+						new Plankton(key, 1)));
+			}
+		}
 		config.getRocks().forEach(r -> addFelsen(r));
 		config.getSharks().forEach(s -> add(s));
 		config.getFishes().forEach(f -> add(f));
@@ -91,12 +99,12 @@ public class Board {
 				.build();
 	}
 
-	private void add(final Fisch fisch) {
+	public void add(final Fisch fisch) {
 		fische.add(fisch);
 		fireEvent(new ItemPositionEvent<Fisch>(fisch, Optional.empty()));
 	}
 
-	private void add(final Hai hai) {
+	public void add(final Hai hai) {
 		haie.add(hai);
 		fireEvent(new ItemPositionEvent<Hai>(hai, Optional.empty()));
 	}
@@ -116,6 +124,8 @@ public class Board {
 		for (Fisch fisch : fische) {
 			fireEvent(new ItemPositionEvent<Fisch>(fisch, Optional.empty()));
 		}
+		plankton.forEach((point, count) -> fireEvent(new PlanktonChangeEvent(
+				new Plankton(point, count))));
 	}
 
 	public Point getUpperLeftCorner() {
@@ -186,7 +196,7 @@ public class Board {
 				haie.remove(h);
 				eatFish(h);
 
-				if (new Random().nextInt(100 + 1) <= reproductionPercent) {
+				if (h.sollteFortpflanzen(new Random().nextInt(100 + 1), reproductionPercent)) {
 					List<Hai> children = reproduceItem(h);
 					for (Hai child : children) {
 						Hai movedHai = move(child);
@@ -218,7 +228,7 @@ public class Board {
 			if (f.isAlive()) {
 				fische.remove(f);
 
-				if (new Random().nextInt(100 + 1) <= reproductionPercent) {
+				if (f.sollteFortpflanzen(new Random().nextInt(100 + 1), reproductionPercent)) {
 					List<Fisch> children = reproduceItem(f);
 
 					for (Fisch child : children) {
@@ -253,10 +263,12 @@ public class Board {
 	}
 
 	private void eatFish(final Hai h) {
-		for (Fisch f : fische) {
+		for (Fisch f : new ArrayList<>(fische)) {
 			if (Math.abs(f.currentPosition().getX() - h.currentPosition().getX()) <= 1
 					&& Math.abs(f.currentPosition().getY() - h.currentPosition().getY()) <= 1) {
 				h.eat(f);
+				fische.remove(f);
+				fireEvent(new ItemDiedEvent<>(f));
 				break;
 			}
 		}
