@@ -18,6 +18,11 @@ public class Hai extends AbstractFisch<Hai, RichtungGen> {
 	}
 
 	@Override
+	public boolean sollteFortpflanzen(int random, int fortpflanzen) {
+		return weight > 3 && random <= fortpflanzen + Math.ceil(weight / 2);
+	}
+
+	@Override
 	public void eat(AbstractLebewesen<?> lebewesen) {
 		super.eat(lebewesen);
 		this.eaten = lebewesen;

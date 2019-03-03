@@ -10,7 +10,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +19,7 @@ import de.kreth.kata.spieldeslebens.items.Plankton;
 import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 import de.kreth.kata.spieldeslebens.ozean.Point;
 
-class OceanField extends JPanel {
+class OceanField extends JComponent {
 
 	private static final long serialVersionUID = -6818972784243153586L;
 
@@ -52,10 +52,15 @@ class OceanField extends JPanel {
 
 	private Plankton plankton;
 
+	public Icon getIcon() {
+		return icon;
+	}
+
 	public OceanField() {
 		setPreferredSize(new Dimension(30, 30));
 		setBackground(Color.WHITE);
 		setBorder(BorderFactory.createRaisedBevelBorder());
+
 	}
 
 	@Override
@@ -170,6 +175,11 @@ class OceanField extends JPanel {
 	public void setFelsen() {
 		logger.trace("Setting ROCK at " + point);
 		icon = Icon.ROCK;
+	}
+
+	@Override
+	public String toString() {
+		return "OceanField [point=" + point + ", icon=" + icon + ", plankton=" + plankton + "]";
 	}
 
 }

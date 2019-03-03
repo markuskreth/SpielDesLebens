@@ -1,17 +1,30 @@
 package de.kreth.kata.spieldeslebens.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragGestureRecognizer;
+import java.awt.dnd.DragSource;
+import java.awt.dnd.DragSourceDragEvent;
+import java.awt.dnd.DragSourceDropEvent;
+import java.awt.dnd.DragSourceEvent;
+import java.awt.dnd.DragSourceListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
@@ -27,6 +40,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.MouseInputAdapter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +51,7 @@ import de.kreth.kata.spieldeslebens.events.ItemDiedEvent;
 import de.kreth.kata.spieldeslebens.events.ItemEvent;
 import de.kreth.kata.spieldeslebens.events.ItemListener;
 import de.kreth.kata.spieldeslebens.events.ItemPositionEvent;
+import de.kreth.kata.spieldeslebens.items.AbstractLebewesen;
 import de.kreth.kata.spieldeslebens.items.Felsen;
 import de.kreth.kata.spieldeslebens.items.Fisch;
 import de.kreth.kata.spieldeslebens.items.Hai;
@@ -44,10 +59,13 @@ import de.kreth.kata.spieldeslebens.items.Plankton;
 import de.kreth.kata.spieldeslebens.items.WithPosition;
 import de.kreth.kata.spieldeslebens.ozean.Himmelsrichtung;
 import de.kreth.kata.spieldeslebens.ozean.Point;
+import de.kreth.kata.spieldeslebens.swing.OceanFieldData.Builder;
 
-public class GameFrame extends JFrame implements ItemListener {
+public class GameFrame extends JFrame implements ItemListener, DragGestureListener, DragSourceListener {
 
 	final Logger logger = LogManager.getLogger(getClass());
+
+	private final Lock dragDropLock = new ReentrantLock();
 
 	private static final long serialVersionUID = 1703618122365349251L;
 
@@ -71,12 +89,17 @@ public class GameFrame extends JFrame implements ItemListener {
 
 	private final PointRandomizer itemPointRandomizer;
 
+	private final DragSource dragSource;
+
 	public GameFrame(Board board) {
 		super();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		timer = new Timer("Game Timer");
 		this.board = board;
 		board.add(this);
+
+		dragSource = DragSource.getDefaultDragSource();
+
 		itemPointRandomizer = new PointRandomizer(board.getLowerRightCorner().getX(),
 				board.getLowerRightCorner().getY());
 		this.setLayout(new BorderLayout());
@@ -99,8 +122,10 @@ public class GameFrame extends JFrame implements ItemListener {
 		north.add(statisticUI);
 
 		add(north, BorderLayout.NORTH);
+
 		board.fireItemInitEvents();
 		pack();
+
 	}
 
 	public JPanel createSpeedSlider() {
@@ -160,7 +185,8 @@ public class GameFrame extends JFrame implements ItemListener {
 		JPanel panel = new JPanel(new GridLayout(2, 2));
 		panel.add(startStopToggle);
 		panel.add(addFisch);
-		panel.add(new JLabel());
+		JLabel dropTarget = new JLabel();
+		panel.add(dropTarget);
 		panel.add(addShark);
 		return panel;
 	}
@@ -185,6 +211,10 @@ public class GameFrame extends JFrame implements ItemListener {
 		int width = lowerRightCorner.getX() + Math.abs(upperLeftCorner.getX());
 		boardPanel = new JPanel(new GridLayout(height, width));
 
+		final DragGestureRecognizer dgr = dragSource.createDefaultDragGestureRecognizer(boardPanel,
+				DnDConstants.ACTION_MOVE, GameFrame.this);
+		dgr.setComponent(GameFrame.this);
+
 		logger.debug("Creating board with Size {}x{}", width, height);
 		List<Point> points = new ArrayList<>();
 
@@ -194,6 +224,47 @@ public class GameFrame extends JFrame implements ItemListener {
 				field.point = new Point(x, y);
 				field.setToolTipText(field.point.toString());
 				points.add(field.point);
+
+				field.addMouseListener(new MouseInputAdapter() {
+
+					@Override
+					public void mousePressed(MouseEvent e) {
+						logger.debug("Mouse pressend on {}: {}", field, e);
+
+						if (dragDropLock.tryLock()) {
+							try {
+
+								int act = DnDConstants.ACTION_MOVE;
+								List<MouseEvent> events = Arrays.asList(e);
+
+								DragGestureEvent dge = new DragGestureEvent(dgr, act, e.getPoint(), events);
+
+								Optional<WithPosition> occupation = board.getOccupation(field.point);
+								if (occupation.isPresent() && occupation.get() instanceof AbstractLebewesen<?>) {
+
+									Builder builder = OceanFieldData.builder()
+											.setIcon(field.getIcon())
+											.setPoint(field.point)
+											.setLebewesen((AbstractLebewesen<?>) occupation.get());
+
+									OceanFieldTransferable transfer = new OceanFieldTransferable(
+											builder.build());
+									dragSource.startDrag(dge, DragSource.DefaultMoveDrop, transfer, GameFrame.this);
+								}
+							}
+							finally {
+								dragDropLock.unlock();
+							}
+						}
+
+					}
+
+					@Override
+					public void mouseDragged(MouseEvent e) {
+						logger.trace("mouseDragged on {}", field.point);
+					}
+				});
+
 				pointToPanelMap.put(field.point, field);
 				boardPanel.add(field);
 			}
@@ -388,4 +459,41 @@ public class GameFrame extends JFrame implements ItemListener {
 		}
 
 	}
+
+	@Override
+	public void dragGestureRecognized(DragGestureEvent dge) {
+		Component component = dge.getComponent();
+		InputEvent mev = dge.getTriggerEvent();
+
+		logger.trace("dragGestureRecognized: Component={}, InputEvent={}", component.getClass().getSimpleName(), mev);
+
+	}
+
+	@Override
+	public void dragEnter(DragSourceDragEvent dsde) {
+
+		logger.trace("dragEnter: {}", dsde.getLocation());
+	}
+
+	@Override
+	public void dragOver(DragSourceDragEvent dsde) {
+		logger.trace("dragOver: {}", dsde.getLocation());
+	}
+
+	@Override
+	public void dropActionChanged(DragSourceDragEvent dsde) {
+		logger.trace("dropActionChanged: {}", dsde.getLocation());
+	}
+
+	@Override
+	public void dragExit(DragSourceEvent dse) {
+
+		logger.trace("dragExit: {}", dse.getLocation());
+	}
+
+	@Override
+	public void dragDropEnd(DragSourceDropEvent dsde) {
+		logger.trace("dragDropEnd: {}", dsde.getLocation());
+	}
+
 }
